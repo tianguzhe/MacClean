@@ -1,0 +1,3 @@
+// Single source for Xcode, packaging and release tags.
+MARKETING_VERSION = 1.2
+CURRENT_PROJECT_VERSION = 2
