@@ -1,4 +1,4 @@
-# 代码检查记录 · 1.2
+# 代码检查记录
 
 检查了扫描引擎、目录发现、数据模型、扫描状态与取消、六类 SwiftUI 页面、命令卡片、资源与发布脚本。
 
@@ -29,3 +29,13 @@
 - Python 3.9、错误版本标签、过期应用版本与构建号被正确拦截；默认 Python 过旧时会选择已有的 Python 3.10+。
 - 使用带空格路径的临时 Git 仓库和本地 bare 远程验证发布预演、脏工作区、错误分支、重复标签，以及原子推送失败时的标签回滚；未向 GitHub 推送。
 - 构建使用 Xcode 27.1；本地 DMG 使用已有 Python 3.14，Actions 配置为 Python 3.12。打包验证时工作区尚未配置 Git 仓库与远程，Actions 与 GitHub Release 仅完成本地校验，尚未在 GitHub 实际运行。产物仍为 ad-hoc 签名，未公证。
+
+## 1.2.1 · GitHub 打包失败修复
+
+[CI](https://github.com/tianguzhe/MacClean/actions/runs/40289414766) 与 [Release](https://github.com/tianguzhe/MacClean/actions/runs/40289441641) 均在 `Build and verify universal DMG` 步骤失败。测试与应用编译通过，错误发生在签名后的架构检查：GitHub 的 Xcode 26.6 将 `lipo -verify_arch arm64 <executable>` 中的文件路径当作架构名，报告 `unknown architecture specification flag`。
+
+将架构检查改为 `lipo -archs <executable>`，按完整名称确认 arm64 与 x86_64，供打包前和最终镜像内的应用检查共用。新增 `Scripts/test-packaging.sh`，用真实的两份单架构 Mach-O 和一份通用 Mach-O 验证检查行为，并接入 `Scripts/test.sh`，使 CI 和 Release 都会自动执行。
+
+本地验证：17 项核心测试、3 项架构回归检查、Shell 语法和 actionlint 校验通过；1.2.1（构建号 3）的完整双架构构建、DMG 校验、镜像内代码签名、二进制与资源一致性及 SHA-256 均通过。此次验证使用本地 Xcode 27.1，修复后的 GitHub 运行结果需推送后确认。
+
+现有 `v1.2` 标签仍指向旧提交，因此修复版本更新为 1.2.1，使用新标签发布；未修改或重推旧标签。

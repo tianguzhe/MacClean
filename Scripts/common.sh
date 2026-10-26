@@ -30,6 +30,20 @@ run_logged() {
     fi
 }
 
+verify_architectures() {
+    local executable="$1"
+    local architectures
+    architectures=$(/usr/bin/lipo -archs "$executable") || fail "Cannot read architectures: $executable"
+    local arch
+    for arch in arm64 x86_64; do
+        case " $architectures " in
+            *" $arch "*) ;;
+            *) fail "Missing $arch architecture in $executable (found: $architectures)." ;;
+        esac
+    done
+    printf 'Verified universal binary: %s\n' "$architectures"
+}
+
 verify_app() {
     local app="$1"
     [[ -d "$app" ]] || fail "Missing app: $app. Run Scripts/build.sh first."
@@ -38,11 +52,8 @@ verify_app() {
         fail 'App version is stale. Run Scripts/build.sh again.'
     [[ "$(/usr/libexec/PlistBuddy -c 'Print CFBundleVersion' "$plist")" == "$MACCLEAN_BUILD" ]] ||
         fail 'App build number is stale. Run Scripts/build.sh again.'
-    # Check each slice separately (also works with lipo versions that consume
-    # multiple -verify_arch arguments as input filenames).
-    local arch
-    for arch in arm64 x86_64; do
-        /usr/bin/lipo -verify_arch "$arch" "$app/Contents/MacOS/MacClean"
-    done
+    # Read the architecture list instead of relying on -verify_arch's parsing
+    # of positional arguments, which differs between Xcode lipo versions.
+    verify_architectures "$app/Contents/MacOS/MacClean"
     /usr/bin/codesign --verify --deep --strict --verbose=2 "$app"
 }

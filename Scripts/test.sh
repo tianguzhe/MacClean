@@ -10,3 +10,4 @@ run_logged .build/test.log swift test --scratch-path .build/tests \
     --security-path .build/package-security \
     -Xswiftc -module-cache-path -Xswiftc "$MACCLEAN_ROOT/.build/swift-cache"
 tail -n 24 .build/test.log
+bash Scripts/test-packaging.sh
